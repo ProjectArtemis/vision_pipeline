@@ -13,6 +13,8 @@
   <run_depend>stereo_image_proc</run_depend>
   <run_depend>image_geometry</run_depend>
   <run_depend>image_proc</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>compressed_image_transport</run_depend>
   <run_depend>cv_bridge</run_depend>
   <export>
     <metapackage/>
