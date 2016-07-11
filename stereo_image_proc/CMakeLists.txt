@@ -4,6 +4,8 @@ project(stereo_image_proc)
 find_package(catkin REQUIRED cv_bridge dynamic_reconfigure image_geometry image_proc image_transport message_filters nodelet sensor_msgs stereo_msgs)
 find_package(Boost REQUIRED COMPONENTS thread)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -march=armv8-a")
+
 # Dynamic reconfigure support
 generate_dynamic_reconfigure_options(cfg/Disparity.cfg)
 
@@ -20,10 +22,29 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS}
                            ${OpenCV_INCLUDE_DIRS}
 )
 
+# CUDA SGM
+find_package(CUDA REQUIRED)
+
+set(CUDA_ARCH "-arch=sm_53" CACHE STRING "Value of the NVCC -arch option.")
+SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_ARCH}")
+SET(LIBSGM_SRC 
+	src/libcuda_sgm/census.cu 
+	src/libcuda_sgm/matching_cost.cu 
+	src/libcuda_sgm/scan_scost.cu 
+	src/libcuda_sgm/winner_takes_all.cu 
+	src/libcuda_sgm/median_filter.cu 
+	src/libcuda_sgm/check_consistency.cu 
+	src/libcuda_sgm/cuda_utils.cu
+)
+
+CUDA_ADD_LIBRARY(libcuda_sgm src/libcuda_sgm/stereo_sgm.cpp ${LIBSGM_SRC} STATIC)
+
+
 # Nodelet library
 add_library(${PROJECT_NAME} src/libstereo_image_proc/processor.cpp src/nodelets/disparity.cpp src/nodelets/point_cloud2.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES}
                                       ${OpenCV_LIBRARIES}
+                                      libcuda_sgm
 )
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 install(TARGETS ${PROJECT_NAME}

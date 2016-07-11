@@ -34,6 +34,7 @@
 #ifndef STEREO_IMAGE_PROC_PROCESSOR_H
 #define STEREO_IMAGE_PROC_PROCESSOR_H
 
+#include "stereo_image_proc/libsgm.h"
 #include <image_proc/processor.h>
 #include <image_geometry/stereo_camera_model.h>
 #include <stereo_msgs/DisparityImage.h>
@@ -56,15 +57,10 @@ class StereoProcessor
 public:
   
   StereoProcessor()
-#if CV_MAJOR_VERSION == 3
-  {
-    block_matcher_ = cv::StereoBM::create();
-    sg_block_matcher_ = cv::StereoSGBM::create(1, 1, 10);
-#else
     : block_matcher_(cv::StereoBM::BASIC_PRESET),
       sg_block_matcher_()
   {
-#endif
+    sg_matcher_ = new sgm::StereoSGM(640, 480, 128, 8, 16, sgm::EXECUTE_INOUT_HOST2HOST);
   }
 
   enum StereoType
@@ -175,6 +171,10 @@ private:
   mutable cv::StereoBM block_matcher_; // contains scratch buffers for block matching
   mutable cv::StereoSGBM sg_block_matcher_;
 #endif
+
+  // TODO : proper ptr
+  mutable sgm::StereoSGM* sg_matcher_;
+  
   StereoType current_stereo_algorithm_;
   // scratch buffers for speckle filtering
   mutable cv::Mat_<uint32_t> labels_;
